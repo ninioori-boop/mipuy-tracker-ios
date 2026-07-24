@@ -1,0 +1,71 @@
+import SwiftUI
+
+struct SettingsView: View {
+    @Environment(AppState.self) private var appState
+    @Environment(\.dismiss) private var dismiss
+    @State private var confirmDisconnect = false
+
+    private var version: String {
+        let v = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
+        let b = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?"
+        return "\(v) (\(b))"
+    }
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section("חיבור") {
+                    HStack {
+                        Text("סטטוס")
+                        Spacer()
+                        Text(appState.token == nil ? "לא מחובר" : "מחובר ✓")
+                            .foregroundStyle(appState.token == nil ? Brand.expense : Brand.income)
+                    }
+                    Button("התחבר מחדש") {
+                        UIApplication.shared.open(Config.connectURL)
+                    }
+                    Button("נתק את החשבון", role: .destructive) {
+                        confirmDisconnect = true
+                    }
+                }
+
+                Section("קליטה אוטומטית") {
+                    NavigationLink("מדריך הקמת האוטומציה") {
+                        AutomationGuideView()
+                    }
+                }
+
+                Section("התראות") {
+                    Button("הגדרות התראות של האפליקציה") {
+                        if let url = URL(string: UIApplication.openNotificationSettingsURLString) {
+                            UIApplication.shared.open(url)
+                        }
+                    }
+                }
+
+                Section {
+                    HStack {
+                        Text("גרסה")
+                        Spacer()
+                        Text(version).foregroundStyle(Brand.mutedText)
+                    }
+                }
+            }
+            .navigationTitle("הגדרות")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("סגור") { dismiss() }
+                }
+            }
+            .confirmationDialog("לנתק את החשבון מהמכשיר?", isPresented: $confirmDisconnect, titleVisibility: .visible) {
+                Button("נתק", role: .destructive) {
+                    appState.disconnect()
+                    dismiss()
+                }
+            }
+        }
+        .environment(\.layoutDirection, .rightToLeft)
+        .preferredColorScheme(.dark)
+    }
+}

@@ -1,0 +1,37 @@
+# Build + sign + upload to TestFlight, entirely in CI (no Mac exists on this team).
+# Auth is the App Store Connect API key only — no Apple ID password, no 2FA.
+default_platform(:ios)
+
+platform :ios do
+  desc "Build and upload to TestFlight"
+  lane :beta do
+    api_key = app_store_connect_api_key(
+      key_id: ENV.fetch("ASC_KEY_ID"),
+      issuer_id: ENV.fetch("ASC_ISSUER_ID"),
+      key_filepath: "fastlane/AuthKey.p8",
+    )
+
+    match(type: "appstore", api_key: api_key)
+
+    build_number = ENV.fetch("GITHUB_RUN_NUMBER", "1")
+    gym(
+      project: "Hakalkalan.xcodeproj",
+      scheme: "Hakalkalan",
+      configuration: "Release",
+      export_method: "app-store",
+      output_directory: "build",
+      output_name: "Hakalkalan.ipa",
+      xcargs: "CURRENT_PROJECT_VERSION=#{build_number} DEVELOPMENT_TEAM=#{ENV.fetch('APPLE_TEAM_ID')}",
+      export_options: {
+        provisioningProfiles: {
+          "com.orimipuy.hakalkalan" => "match AppStore com.orimipuy.hakalkalan",
+        },
+      },
+    )
+
+    pilot(
+      api_key: api_key,
+      skip_waiting_for_build_processing: true,
+    )
+  end
+end

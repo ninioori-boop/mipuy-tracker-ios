@@ -1,0 +1,2 @@
+app_identifier("com.orimipuy.hakalkalan")
+team_id(ENV["APPLE_TEAM_ID"])
