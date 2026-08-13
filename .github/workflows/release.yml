@@ -17,7 +17,15 @@ jobs:
     runs-on: macos-15
     timeout-minutes: 45
     steps:
+      # persist-credentials MUST stay false. Otherwise checkout writes an
+      # http.https://github.com/.extraheader into .git/config carrying the job's
+      # GITHUB_TOKEN, which is scoped to THIS repo only. That header overrides the
+      # credentials embedded in MATCH_GIT_URL, so every git call fastlane match
+      # makes against the private certs repo comes back "Repository not found" —
+      # a permission error wearing the costume of a missing repo. Cost: 4 red runs.
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Pin Xcode
         run: sudo xcode-select -s /Applications/Xcode_16.4.app || sudo xcode-select -s /Applications/Xcode_16.2.app
