@@ -59,29 +59,6 @@ jobs:
       - name: Write App Store Connect API key
         run: echo "${{ secrets.ASC_KEY_P8 }}" | base64 --decode > fastlane/AuthKey.p8
 
-      # Diagnostics only. The log archive needs repo-admin rights to download, but
-      # ::warning:: / ::error:: lines land in the check-run annotations, which are
-      # readable without them. Remove once the pipeline is green.
-      - name: Diagnose signing prerequisites
-        env:
-          MATCH_GIT_TOKEN: ${{ secrets.MATCH_GIT_TOKEN }}
-        run: |
-          set +e
-          for n in ASC_KEY_ID ASC_ISSUER_ID APPLE_TEAM_ID MATCH_PASSWORD MATCH_GIT_TOKEN; do
-            case "$n" in
-              ASC_KEY_ID)       v="${{ secrets.ASC_KEY_ID }}" ;;
-              ASC_ISSUER_ID)    v="${{ secrets.ASC_ISSUER_ID }}" ;;
-              APPLE_TEAM_ID)    v="${{ secrets.APPLE_TEAM_ID }}" ;;
-              MATCH_PASSWORD)   v="${{ secrets.MATCH_PASSWORD }}" ;;
-              MATCH_GIT_TOKEN)  v="${{ secrets.MATCH_GIT_TOKEN }}" ;;
-            esac
-            echo "::warning::secret $n length=${#v}"
-          done
-          echo "::warning::AuthKey.p8 bytes=$(wc -c < fastlane/AuthKey.p8) firstline=$(head -c 27 fastlane/AuthKey.p8)"
-          OUT=$(git ls-remote "https://x-access-token:${MATCH_GIT_TOKEN}@github.com/ninioori-boop/mipuy-ios-certs.git" 2>&1)
-          CODE=$?
-          echo "::warning::certs repo ls-remote exit=$CODE msg=$(echo "$OUT" | head -3 | tr '\n' ' ')"
-
       - name: Build, sign and upload to TestFlight
         env:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
