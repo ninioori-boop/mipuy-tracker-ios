@@ -11,6 +11,12 @@ platform :ios do
       key_filepath: "fastlane/AuthKey.p8",
     )
 
+    # Required on CI, and its absence does not fail loudly: without a temporary
+    # unlocked keychain, match imports the signing identity into the login
+    # keychain and codesign then BLOCKS on a GUI authorisation prompt that no
+    # one can answer. The job burns its whole timeout looking like a slow build.
+    setup_ci
+
     match(type: "appstore", api_key: api_key)
 
     # Never hardcode the profile name. When a capability changes on the App ID,

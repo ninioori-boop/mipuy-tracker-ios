@@ -79,7 +79,16 @@ jobs:
           # the script dies on the failing command and never reaches the reporting
           # lines below. That is why runs 3-7 produced no fastlane annotation at all.
           set +e
-          bundle exec fastlane beta > fastlane.log 2>&1
+          bundle exec fastlane beta > fastlane.log 2>&1 &
+          FL=$!
+          # Heartbeat: a cancelled job never reaches the reporting block below, so
+          # run 10 timed out after 45 minutes and told us nothing about where it
+          # stalled. Annotations are emitted as they are printed, so these survive.
+          while kill -0 $FL 2>/dev/null; do
+            sleep 120
+            echo "::warning::progress $(date -u +%H:%M) :: $(tail -2 fastlane.log | tr '\n' ' ' | tail -c 300)"
+          done
+          wait $FL
           status=$?
           tail -80 fastlane.log
           if [ $status -ne 0 ]; then
