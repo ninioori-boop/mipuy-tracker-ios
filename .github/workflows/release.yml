@@ -27,8 +27,23 @@ jobs:
         with:
           persist-credentials: false
 
+      # Must be Xcode 26 or newer: App Store Connect rejects the upload otherwise
+      # ("built with the iOS 26 SDK or later ... in order to be uploaded", 409).
+      # The build and the signing both pass on older Xcode, so this only shows up
+      # at the very last step. Newest first, falling back through the versions the
+      # macos-15 image ships.
       - name: Pin Xcode
-        run: sudo xcode-select -s /Applications/Xcode_16.4.app || sudo xcode-select -s /Applications/Xcode_16.2.app
+        run: |
+          for v in 26.3 26.2 26.1.1 26.0.1; do
+            if [ -d "/Applications/Xcode_$v.app" ]; then
+              sudo xcode-select -s "/Applications/Xcode_$v.app"
+              xcodebuild -version
+              exit 0
+            fi
+          done
+          echo "::error::no Xcode 26.x found on this runner image"
+          ls -d /Applications/Xcode*.app
+          exit 1
 
       - name: Install XcodeGen
         run: brew install xcodegen
