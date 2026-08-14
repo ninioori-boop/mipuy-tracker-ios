@@ -32,6 +32,14 @@ enum Notifier {
         )
     }
 
+    static func showEmptyPayload() {
+        show(
+            title: "תשלום לא נרשם",
+            body: "החיוב זוהה אבל הפרטים הגיעו ריקים. אפשר להוסיף ידנית באפליקציה.",
+            warn: true
+        )
+    }
+
     static func showFailure(details: String) {
         show(
             title: "תשלום לא נרשם",

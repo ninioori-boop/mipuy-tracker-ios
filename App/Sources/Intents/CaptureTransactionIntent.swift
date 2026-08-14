@@ -13,7 +13,14 @@ struct CaptureTransactionIntent: AppIntent {
     )
     static var openAppWhenRun = false
 
-    @Parameter(title: "פרטי העסקה")
+    // inputConnectionBehavior is what makes this automatic. Without it Shortcuts
+    // leaves the parameter unbound, and an unbound required parameter makes iOS
+    // stop and ASK the user to type the charge — which defeats the entire point
+    // and cannot work on a locked phone. Verified on a real charge 2026-08-14:
+    // the automation fired, then prompted for text. With this, Shortcuts wires
+    // the Wallet trigger's transaction straight in, and no client has to know
+    // what a variable is.
+    @Parameter(title: "פרטי העסקה", inputConnectionBehavior: .connectToPreviousIntentResult)
     var details: String
 
     func perform() async throws -> some IntentResult {
@@ -23,7 +30,13 @@ struct CaptureTransactionIntent: AppIntent {
         }
 
         let trimmed = details.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return .result() }
+        guard !trimmed.isEmpty else {
+            // An empty payload means the automation is misconfigured. Returning
+            // quietly here would drop a real charge and look like nothing ever
+            // happened, which is the one failure mode this app must not have.
+            Notifier.showEmptyPayload()
+            return .result()
+        }
 
         do {
             let response = try await post(token: token, merchant: trimmed)
