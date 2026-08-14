@@ -5,6 +5,7 @@ import SwiftUI
 struct WebShellView: View {
     @Environment(AppState.self) private var appState
     @State private var showSettings = false
+    @State private var connect = ConnectSession()
 
     var body: some View {
         ZStack(alignment: .topLeading) {
@@ -40,9 +41,10 @@ struct WebShellView: View {
                 appState.setToken(token.removingPercentEncoding ?? token)
             }
         case "reauth":
-            // Google OAuth can't run inside a webview — bounce to Safari;
-            // the token comes back via the deep link.
-            UIApplication.shared.open(Config.connectURL)
+            // Google OAuth can't run inside a webview. The Safari sheet can do
+            // it and, unlike a jump to Safari proper, closes itself afterwards
+            // instead of stranding the user on a blank tab.
+            connect.start { token in appState.setToken(token) }
         case "settings":
             showSettings = true
         default:

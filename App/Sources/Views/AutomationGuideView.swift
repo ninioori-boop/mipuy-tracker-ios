@@ -9,8 +9,7 @@ struct AutomationGuideView: View {
         ("3", "גללו ובחרו «ארנק» (בגרסאות ישנות: «עסקה»)"),
         ("4", "בחרו «כאשר אני מקיש», סמנו את הכרטיסים שלכם, ובחרו «הפעל מיד»"),
         ("5", "במסך בחירת הפעולה חפשו «רישום הוצאה» של הכלכלן של הבית ובחרו אותה"),
-        ("6", "אם מופיע שדה «פרטי העסקה» ריק, הקישו עליו ובחרו את «קלט של קיצור»"),
-        ("7", "סיום! מהתשלום הבא כל הוצאה תירשם לבד עם התראה"),
+        ("6", "סיום! מהתשלום הבא כל הוצאה תירשם לבד עם התראה"),
     ]
 
     var body: some View {
@@ -18,6 +17,10 @@ struct AutomationGuideView: View {
             VStack(alignment: .leading, spacing: 20) {
                 Text("הגדרה חד-פעמית של כ-2 דקות. אפל מחייבת שכל משתמש יגדיר את זה בעצמו במכשיר.")
                     .foregroundStyle(Brand.mutedText)
+
+                Text("בלי הצעד הזה האפליקציה לא תרשום שום תשלום.")
+                    .font(.footnote)
+                    .foregroundStyle(Brand.gold)
 
                 ForEach(steps, id: \.0) { step in
                     HStack(alignment: .top, spacing: 12) {

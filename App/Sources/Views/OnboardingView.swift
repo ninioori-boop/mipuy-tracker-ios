@@ -1,9 +1,13 @@
 import SwiftUI
 
-// First-run screen: brand + one button that opens the login page in system
-// Safari (Google OAuth is blocked inside webviews). The page returns the
-// device token via the mipuytracker:// deep link and RootView flips onward.
+// First-run screen: brand + one button that opens the login page in a Safari
+// sheet (Google OAuth is blocked inside webviews). The page hands back the
+// device token via the mipuytracker:// callback, the sheet closes itself, and
+// RootView flips onward — see ConnectSession for why this is not a Safari jump.
 struct OnboardingView: View {
+    @Environment(AppState.self) private var appState
+    @State private var connect = ConnectSession()
+
     var body: some View {
         VStack(spacing: 24) {
             Spacer()
@@ -24,7 +28,7 @@ struct OnboardingView: View {
             Spacer()
 
             Button {
-                UIApplication.shared.open(Config.connectURL)
+                connect.start { token in appState.setToken(token) }
             } label: {
                 Text("התחבר עם החשבון שלך")
                     .font(.headline)
@@ -36,7 +40,7 @@ struct OnboardingView: View {
             }
             .padding(.horizontal, 24)
 
-            Text("ההתחברות נפתחת בדפדפן ותחזור לכאן לבד")
+            Text("ההתחברות נפתחת כאן ונסגרת לבד בסיום")
                 .font(.footnote)
                 .foregroundStyle(Brand.mutedText)
                 .padding(.bottom, 32)
