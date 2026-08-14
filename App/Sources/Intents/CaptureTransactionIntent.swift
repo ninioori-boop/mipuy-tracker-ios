@@ -13,13 +13,20 @@ struct CaptureTransactionIntent: AppIntent {
     )
     static var openAppWhenRun = false
 
-    // inputConnectionBehavior is what makes this automatic. Without it Shortcuts
-    // leaves the parameter unbound, and an unbound required parameter makes iOS
-    // stop and ASK the user to type the charge — which defeats the entire point
-    // and cannot work on a locked phone. Verified on a real charge 2026-08-14:
-    // the automation fired, then prompted for text. With this, Shortcuts wires
-    // the Wallet trigger's transaction straight in, and no client has to know
-    // what a variable is.
+    // Kept, but do not mistake it for automatic binding — it was tried for
+    // exactly that and does not work here. It connects the parameter to the
+    // PREVIOUS INTENT'S RESULT, and in a Wallet automation this action is the
+    // first and only one, so there is no previous result and the Wallet
+    // transaction is not offered as one. Retested on a real charge 2026-08-14:
+    // iOS still stopped and asked the user to type the purchase.
+    //
+    // Apple gives no way to bind the trigger's transaction from our side. The
+    // client has to attach «קלט של קיצור» / Shortcut Input to this field once,
+    // by hand, which is why that is now step 6 of the in-app guide and flagged
+    // there as the one step that must not be skipped. Skipping it produces an
+    // automation that looks perfectly set up and prompts for every purchase —
+    // and cannot work at all while the phone is locked, which is every Apple
+    // Pay tap.
     @Parameter(title: "פרטי העסקה", inputConnectionBehavior: .connectToPreviousIntentResult)
     var details: String
 
