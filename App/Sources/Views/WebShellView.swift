@@ -1,14 +1,18 @@
 import SwiftUI
 
 // The main screen once connected: the real expenses tab, full screen.
-// A floating gear opens native settings (also our guideline-4.2 surface).
+//
+// Settings are reached through the web menu's "הגדרות האפליקציה בטלפון" row,
+// which fires mipuytracker://settings and lands in the `settings` case below.
+// There used to be a floating gear here as well; it overlapped the page's own
+// hamburger and duplicated a route the menu already offered.
 struct WebShellView: View {
     @Environment(AppState.self) private var appState
     @State private var showSettings = false
     @State private var connect = ConnectSession()
 
     var body: some View {
-        ZStack(alignment: .topLeading) {
+        Group {
             if let token = appState.token {
                 WebView(url: Config.expensesURL(token: token)) { deepLink in
                     handle(deepLink)
@@ -16,16 +20,6 @@ struct WebShellView: View {
                 .id(token)
                 .ignoresSafeArea(edges: .bottom)
             }
-
-            Button {
-                showSettings = true
-            } label: {
-                Image(systemName: "gearshape.fill")
-                    .font(.system(size: 15))
-                    .foregroundStyle(Brand.mutedText.opacity(0.7))
-                    .padding(10)
-            }
-            .accessibilityLabel("הגדרות")
         }
         .background(Brand.surface)
         .sheet(isPresented: $showSettings) {
