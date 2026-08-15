@@ -15,7 +15,13 @@ struct WebView: UIViewRepresentable {
         let webView = WKWebView(frame: .zero, configuration: configuration)
         webView.navigationDelegate = context.coordinator
         webView.uiDelegate = context.coordinator
-        webView.customUserAgent = (WKWebView().value(forKey: "userAgent") as? String ?? "Mozilla/5.0") + " MipuyiOS/1.0"
+        // ExtSchemes/1 is a promise to the web app, not decoration: canOpenExternalSchemes()
+        // in src/lib/isEmbedded.ts hides every whatsapp:/tel:/mailto: link from a shell
+        // that does not claim it, because a raw WebView dies on those with
+        // ERR_UNKNOWN_URL_SCHEME. Without it the WhatsApp connect button is simply not
+        // offered on iPhone. Only add the flag while decidePolicyFor below still honours it.
+        webView.customUserAgent = (WKWebView().value(forKey: "userAgent") as? String ?? "Mozilla/5.0")
+            + " MipuyiOS/1.0 ExtSchemes/1"
         webView.isOpaque = false
         webView.backgroundColor = UIColor(Brand.surface)
         webView.scrollView.backgroundColor = UIColor(Brand.surface)
@@ -55,6 +61,16 @@ struct WebView: UIViewRepresentable {
             }
             if url.scheme == Config.scheme {
                 onDeepLink(url)
+                decisionHandler(.cancel)
+                return
+            }
+            // Anything that is not a web page — whatsapp:, tel:, mailto:, sms: —
+            // belongs to another app. WKWebView cannot load these and fails
+            // silently, so before this the WhatsApp bot button did nothing at all.
+            // about:/data:/blob: stay inside: they are the web view's own plumbing.
+            if let scheme = url.scheme?.lowercased(),
+               !["http", "https", "about", "data", "blob", "file"].contains(scheme) {
+                UIApplication.shared.open(url)
                 decisionHandler(.cancel)
                 return
             }
