@@ -39,4 +39,10 @@ enum Config {
     /// shortcut unshareable — it held a live token in plain sight.
     /// ⚠️ Re-verify emptiness before ever swapping this link for another.
     static let captureShortcutURL = URL(string: "https://www.icloud.com/shortcuts/c7c8bb8cfa0c4fe69cead5cdd61ddc8f")!
+
+    /// 25-second silent screen recording of the whole setup, filmed on a real
+    /// device. Reviewed frame by frame before publishing: it shows only the
+    /// Shortcuts app, never the expenses screens, so no one's finances are in it.
+    /// Also handed to Apple's reviewer, who otherwise has to imagine the flow.
+    static let setupVideoURL = URL(string: "https://app.orimipuy.com/ios-setup.mp4")!
 }

@@ -33,6 +33,17 @@ struct AutomationGuideView: View {
                     .foregroundStyle(Brand.gold)
 
                 Button {
+                    UIApplication.shared.open(Config.setupVideoURL)
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "play.circle.fill")
+                        Text("צפו בסרטון קצר (25 שניות)")
+                    }
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Brand.gold)
+                }
+
+                Button {
                     UIApplication.shared.open(Config.captureShortcutURL)
                 } label: {
                     Text("① הוסף את הקיצור")
