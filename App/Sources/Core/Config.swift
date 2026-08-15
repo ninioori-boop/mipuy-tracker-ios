@@ -21,4 +21,22 @@ enum Config {
 
     /// Custom URL scheme shared with the Android app and the /connect page.
     static let scheme = "mipuytracker"
+
+    /// The ready-made shortcut a client imports in one tap: a Text action that
+    /// pulls «כמות» and «בית עסק» off the Wallet transaction and feeds our
+    /// capture action. Built and verified on a real charge, 2026-08-15.
+    ///
+    /// This link is the difference between a product and a science project.
+    /// Those two properties can only be picked while editing inside an
+    /// automation — Apple does not offer «עסקה» as a declarable input type — so
+    /// no client could reproduce it from written instructions in any reasonable
+    /// number of taps. Sharing the finished shortcut sidesteps that completely:
+    /// the property references survive in the file and resolve at run time even
+    /// though the editor renders them as a bare "קלט של קיצור".
+    ///
+    /// Verified to carry no device token, and it structurally cannot: the token
+    /// lives in the app's Keychain. That is exactly what made the OLD web
+    /// shortcut unshareable — it held a live token in plain sight.
+    /// ⚠️ Re-verify emptiness before ever swapping this link for another.
+    static let captureShortcutURL = URL(string: "https://www.icloud.com/shortcuts/c7c8bb8cfa0c4fe69cead5cdd61ddc8f")!
 }
