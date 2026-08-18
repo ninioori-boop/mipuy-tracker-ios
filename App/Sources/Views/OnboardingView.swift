@@ -1,19 +1,15 @@
 import SwiftUI
 
-// First-run screen: brand + one button that opens the login page in full Safari.
-// The page hands the device token back over the mipuytracker:// deep link and
-// RootView flips onward.
+// First-run screen: brand + one button that opens the login page in a Safari
+// sheet INSIDE the app. The page hands the device token back over the
+// mipuytracker:// deep link, the sheet closes itself, and RootView flips onward.
 //
-// 🔴 This deliberately does NOT use ASWebAuthenticationSession. That sheet was
-// tried (3f154b2) to stop Safari being left open on a blank tab afterwards, and
-// it broke sign-in outright: Firebase's signInWithPopup needs to open a second
-// window, the sheet gives it nowhere to go, and the user watches a black screen
-// spin forever. Found on a real device 2026-08-15 while reconnecting an account.
-// A leftover tab is an annoyance; a sign-in that cannot complete is the product.
-// Do not reintroduce the sheet before /connect is same-origin and switched to
-// signInWithRedirect — see project_google_signin_blank_tab.
+// The condition that makes the sheet safe — /connect must be same-origin and
+// use signInWithRedirect, never a popup — is spelled out in ConnectSession.
+// Apple rejected 1.0 (21) for jumping out to the default browser instead.
 struct OnboardingView: View {
     @Environment(AppState.self) private var appState
+    @State private var connect = ConnectSession()
 
     var body: some View {
         VStack(spacing: 24) {
@@ -35,7 +31,7 @@ struct OnboardingView: View {
             Spacer()
 
             Button {
-                UIApplication.shared.open(Config.connectURL)
+                connect.start { token in appState.setToken(token) }
             } label: {
                 Text("התחבר עם החשבון שלך")
                     .font(.headline)
@@ -47,7 +43,7 @@ struct OnboardingView: View {
             }
             .padding(.horizontal, 24)
 
-            Text("ההתחברות נפתחת בספארי. בסיום חוזרים לכאן")
+            Text("ההתחברות נפתחת כאן ונסגרת לבד בסיום")
                 .font(.footnote)
                 .foregroundStyle(Brand.mutedText)
                 .padding(.bottom, 32)

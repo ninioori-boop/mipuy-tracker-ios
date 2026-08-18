@@ -4,6 +4,7 @@ struct SettingsView: View {
     @Environment(AppState.self) private var appState
     @Environment(\.dismiss) private var dismiss
     @State private var confirmDisconnect = false
+    @State private var connect = ConnectSession()
 
     private var version: String {
         let v = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
@@ -21,8 +22,12 @@ struct SettingsView: View {
                         Text(appState.token == nil ? "לא מחובר" : "מחובר ✓")
                             .foregroundStyle(appState.token == nil ? Brand.expense : Brand.income)
                     }
+                    // The third way into sign-in, and the easiest to forget: it
+                    // jumped to full Safari while the other two were moved into
+                    // the app sheet. That is the exact thing guideline 4
+                    // rejected 1.0 (21) for, reachable in two taps.
                     Button("התחבר מחדש") {
-                        UIApplication.shared.open(Config.connectURL)
+                        connect.start { token in appState.setToken(token) }
                     }
                     Button("נתק את החשבון", role: .destructive) {
                         confirmDisconnect = true

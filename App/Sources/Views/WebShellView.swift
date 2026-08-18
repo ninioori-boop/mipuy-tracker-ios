@@ -9,6 +9,7 @@ import SwiftUI
 struct WebShellView: View {
     @Environment(AppState.self) private var appState
     @State private var showSettings = false
+    @State private var connect = ConnectSession()
 
     var body: some View {
         Group {
@@ -34,10 +35,10 @@ struct WebShellView: View {
                 appState.setToken(token.removingPercentEncoding ?? token)
             }
         case "reauth":
-            // Full Safari, not an in-app sheet: signInWithPopup needs a second
-            // window and a sheet has none, which black-screens sign-in. See the
-            // header of OnboardingView.
-            UIApplication.shared.open(Config.connectURL)
+            // In-app sheet, not full Safari — Apple rejected the jump-out under
+            // guideline 4. Safe only because /connect redirects instead of
+            // opening a popup; see ConnectSession.
+            connect.start { token in appState.setToken(token) }
         case "settings":
             showSettings = true
         default:
