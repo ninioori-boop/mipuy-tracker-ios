@@ -29,6 +29,16 @@ platform :ios do
     profile_name = ENV.fetch("sigh_#{app_id}_appstore_profile-name")
 
     build_number = ENV.fetch("GITHUB_RUN_NUMBER", "1")
+
+    # Injected here rather than committed: the repo holds no API keys. Missing
+    # is survivable — the app then falls back to the in-app sign-in sheet — but
+    # it silently drops the native login form, so say so loudly instead of
+    # shipping a quietly downgraded build.
+    firebase_api_key = ENV.fetch("FIREBASE_API_KEY", "")
+    if firebase_api_key.empty?
+      UI.important("FIREBASE_API_KEY is not set — building WITHOUT the native sign-in form")
+    end
+
     gym(
       project: "Hakalkalan.xcodeproj",
       scheme: "Hakalkalan",
@@ -38,6 +48,7 @@ platform :ios do
       output_name: "Hakalkalan.ipa",
       xcargs: "CURRENT_PROJECT_VERSION=#{build_number} " \
               "DEVELOPMENT_TEAM=#{ENV.fetch('APPLE_TEAM_ID')} " \
+              "FIREBASE_API_KEY='#{firebase_api_key}' " \
               "PROVISIONING_PROFILE_SPECIFIER='#{profile_name}'",
       export_options: {
         provisioningProfiles: {

@@ -14,6 +14,11 @@ settings:
     CURRENT_PROJECT_VERSION: "1"
     SWIFT_VERSION: "5.9"
     CODE_SIGN_STYLE: Manual
+    # Overridden in CI from the FIREBASE_API_KEY secret (see fastlane/Fastfile).
+    # Empty here on purpose: the repo holds no API keys, and an empty value makes
+    # the app fall back to the in-app sign-in sheet instead of showing a password
+    # form that could never work.
+    FIREBASE_API_KEY: ""
 
 targets:
   Hakalkalan:
@@ -36,6 +41,10 @@ targets:
           - CFBundleURLName: com.orimipuy.hakalkalan
             CFBundleURLSchemes:
               - mipuytracker
+        # Read back at run time by Config.firebaseAPIKey. Build settings are
+        # expanded during Info.plist processing, the same mechanism the two
+        # version strings above rely on.
+        FirebaseAPIKey: "$(FIREBASE_API_KEY)"
         ITSAppUsesNonExemptEncryption: false
         NSUserNotificationsUsageDescription: "התראה על כל הוצאה שנקלטת, כולל מצב התקציב"
     entitlements:

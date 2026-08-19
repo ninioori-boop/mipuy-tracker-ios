@@ -66,6 +66,11 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
           MATCH_GIT_URL: https://x-access-token:${{ secrets.MATCH_GIT_TOKEN }}@github.com/ninioori-boop/mipuy-ios-certs.git
+          # Firebase Web key restricted to com.orimipuy.hakalkalan. Without it
+          # the build still ships and still signs in, just through the in-app
+          # sheet instead of the native form; the Fastfile warns when it is
+          # missing so a downgraded build does not pass unnoticed.
+          FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
         run: |
           # `set +e` is load-bearing: the default shell is `bash -e`, so without it
           # the script dies on the failing command and never reaches the reporting

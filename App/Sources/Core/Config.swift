@@ -19,6 +19,37 @@ enum Config {
 
     static let transactionEndpoint = URL(string: "https://app.orimipuy.com/api/transaction")!
 
+    /// Mints the caller's personal device token from a Firebase ID token. It
+    /// predates this app — /connect has always called it — which is why native
+    /// sign-in needed no server work at all.
+    static let deviceTokenEndpoint = URL(string: "https://app.orimipuy.com/api/device-token")!
+
+    /// Firebase Web API key, injected at build time (GitHub secret → fastlane
+    /// xcargs → Info.plist). Empty in a local or misconfigured build, which
+    /// HIDES the password form rather than shipping one that always fails.
+    ///
+    /// It is not a secret in the password sense — Firebase keys are public by
+    /// design and one already ships inside the website's JavaScript — but it
+    /// stays out of the repo because the project rule is that API keys never
+    /// live in source. Restrict it to this bundle ID in Google Cloud; see
+    /// NativeAuth.googleRequest for the header that makes that restriction work.
+    static let firebaseAPIKey = (Bundle.main.infoDictionary?["FirebaseAPIKey"] as? String ?? "")
+        .trimmingCharacters(in: .whitespacesAndNewlines)
+
+    /// Google's own password endpoint, the one the website's Firebase SDK calls
+    /// internally. Talking to it directly is what keeps the password off our
+    /// server entirely.
+    static var passwordSignInEndpoint: URL? {
+        guard !firebaseAPIKey.isEmpty else { return nil }
+        return URL(string: "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=\(firebaseAPIKey)")
+    }
+
+    /// Password-reset mail. Same key, same reasoning.
+    static var sendOobCodeEndpoint: URL? {
+        guard !firebaseAPIKey.isEmpty else { return nil }
+        return URL(string: "https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=\(firebaseAPIKey)")
+    }
+
     /// Custom URL scheme shared with the Android app and the /connect page.
     static let scheme = "mipuytracker"
 
