@@ -103,6 +103,21 @@ struct SignInForm: View {
             }
             .disabled(busy)
         }
+        // 🔴 The keyboard comes up on its own, and that is not a convenience.
+        // Apple refused 1.0 (22) on an iPad Air with "the keyboard was not
+        // displayed, and we could not enter the demo account credentials":
+        // the fields there were a web page inside a sheet, and on iPad running
+        // an iPhone app in compatibility mode that combination does not always
+        // raise the keyboard. Native fields fix the cause; focusing one of them
+        // removes the tap that failed, so a reviewer who lands here can simply
+        // start typing.
+        //
+        // The delay is load-bearing: @FocusState set during the first render is
+        // dropped, and the field silently stays unfocused.
+        .task {
+            try? await Task.sleep(for: .milliseconds(400))
+            focus = .email
+        }
     }
 
     private func submit() {
