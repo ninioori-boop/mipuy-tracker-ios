@@ -59,3 +59,38 @@ targets:
         GENERATE_INFOPLIST_FILE: false
         PROVISIONING_PROFILE_SPECIFIER: "match AppStore com.orimipuy.hakalkalan"
         CODE_SIGN_IDENTITY: "Apple Distribution"
+
+  # Simulator-only. Never built by the release lane, which archives the
+  # Hakalkalan scheme; signing is switched off here so the Manual style
+  # inherited from the global settings cannot ask it for a profile it has no
+  # reason to own.
+  HakalkalanUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - AppTests
+    dependencies:
+      - target: Hakalkalan
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.orimipuy.hakalkalan.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: Hakalkalan
+        CODE_SIGN_STYLE: Automatic
+        CODE_SIGNING_ALLOWED: NO
+        CODE_SIGN_IDENTITY: ""
+        PROVISIONING_PROFILE_SPECIFIER: ""
+
+# A scheme of its own, deliberately NOT named Hakalkalan: fastlane archives
+# `-scheme Hakalkalan`, and redefining that scheme here to carry a test action
+# would put the release lane at risk for the sake of a check that runs nowhere
+# near it.
+schemes:
+  UITests:
+    build:
+      targets:
+        Hakalkalan: [run, test]
+        HakalkalanUITests: [test]
+    test:
+      targets:
+        - HakalkalanUITests
