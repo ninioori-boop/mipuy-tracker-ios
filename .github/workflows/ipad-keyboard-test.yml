@@ -8,6 +8,10 @@ on:
     branches: [ci/ipad-keyboard-test]
   workflow_dispatch:
 
+# Needed by the final step, which reports the outcome back as a tag.
+permissions:
+  contents: write
+
 jobs:
   keyboard:
     runs-on: macos-15
@@ -66,6 +70,7 @@ jobs:
       # covers code written today that nothing had run: does the form focus its
       # own first field, and does typing land?
       - name: iPhone
+        id: iphone
         run: |
           set -o pipefail
           xcodebuild test \
@@ -83,6 +88,7 @@ jobs:
       # (an iPhone-only app may simply not be installable on an iPad simulator),
       # and it must not be reported as "the keyboard is broken".
       - name: iPad
+        id: ipad
         continue-on-error: true
         run: |
           set -o pipefail
@@ -105,3 +111,22 @@ jobs:
           name: keyboard-check-logs
           path: "*.log"
           if-no-files-found: ignore
+
+      # The repo is private and this workstation has no gh CLI, so an Actions
+      # result is unreadable from there. An annotated tag is: `git ls-remote`
+      # finds it and `git fetch` brings the message with it. Same reason the
+      # release tags are how build success gets reported.
+      - name: Report the outcome as a tag
+        if: always()
+        run: |
+          {
+            echo "iphone=${{ steps.iphone.outcome }} ipad=${{ steps.ipad.outcome }}"
+            echo "---"
+            grep -hE "Test Case .*(passed|failed)|XCTAssert|Unsupported|valid destination|Testing failed|error:" \
+              iphone.log ipad.log 2>/dev/null | head -14
+          } > tagmsg.txt
+          cat tagmsg.txt
+          git config user.name  "CI"
+          git config user.email "actions@github.com"
+          git tag -a "kbcheck-${{ github.run_number }}" -F tagmsg.txt
+          git push origin "kbcheck-${{ github.run_number }}"
