@@ -56,27 +56,48 @@ jobs:
           defaults write com.apple.iphonesimulator ConnectHardwareKeyboard -bool false
           echo "ConnectHardwareKeyboard = $(defaults read com.apple.iphonesimulator ConnectHardwareKeyboard 2>/dev/null || echo unset)"
 
+      # By UDID, not by name. Run 2 died here: a device is called
+      # "iPad Air 11-inch (M3)" and the parentheses are part of the name, so
+      # text-slicing it produced something xcodebuild could not match.
       - name: Pick one of each
         id: sims
         run: |
-          IPHONE=$(xcrun simctl list devices available | sed -n 's/^ *\(iPhone [^(]*\) (.*/\1/p' | sed 's/ *$//' | tail -1)
-          IPAD=$(xcrun simctl list devices available | sed -n 's/^ *\(iPad [^(]*\) (.*/\1/p' | sed 's/ *$//' | tail -1)
-          echo "iphone=$IPHONE" >> "$GITHUB_OUTPUT"
-          echo "ipad=$IPAD" >> "$GITHUB_OUTPUT"
-          echo "iPhone: [$IPHONE]"
-          echo "iPad:   [$IPAD]"
+          python3 - <<'PY' > sims.txt
+          import json, subprocess
+          data = json.loads(subprocess.check_output(
+              ["xcrun", "simctl", "list", "devices", "available", "--json"]))
+          phone = pad = None
+          for runtime, devices in data["devices"].items():
+              if "iOS" not in runtime:
+                  continue
+              for d in devices:
+                  if not d.get("isAvailable"):
+                      continue
+                  if d["name"].startswith("iPhone") and phone is None:
+                      phone = d
+                  if d["name"].startswith("iPad") and pad is None:
+                      pad = d
+          print(f"iphone_id={phone['udid'] if phone else ''}")
+          print(f"iphone_name={phone['name'] if phone else 'NONE'}")
+          print(f"ipad_id={pad['udid'] if pad else ''}")
+          print(f"ipad_name={pad['name'] if pad else 'NONE'}")
+          PY
+          cat sims.txt
+          cat sims.txt >> "$GITHUB_OUTPUT"
 
       # Baseline. This half is the one that can answer definitively, and it
       # covers code written today that nothing had run: does the form focus its
       # own first field, and does typing land?
       - name: iPhone
         id: iphone
+        continue-on-error: true
         run: |
+          echo "device: ${{ steps.sims.outputs.iphone_name }}"
           set -o pipefail
           xcodebuild test \
             -project Hakalkalan.xcodeproj \
             -scheme UITests \
-            -destination "platform=iOS Simulator,name=${{ steps.sims.outputs.iphone }}" \
+            -destination "platform=iOS Simulator,id=${{ steps.sims.outputs.iphone_id }}" \
             FIREBASE_API_KEY=ci-dummy-key \
             CODE_SIGNING_ALLOWED=NO \
             > iphone.log 2>&1 || STATUS=$?
@@ -91,11 +112,12 @@ jobs:
         id: ipad
         continue-on-error: true
         run: |
+          echo "device: ${{ steps.sims.outputs.ipad_name }}"
           set -o pipefail
           xcodebuild test \
             -project Hakalkalan.xcodeproj \
             -scheme UITests \
-            -destination "platform=iOS Simulator,name=${{ steps.sims.outputs.ipad }}" \
+            -destination "platform=iOS Simulator,id=${{ steps.sims.outputs.ipad_id }}" \
             FIREBASE_API_KEY=ci-dummy-key \
             CODE_SIGNING_ALLOWED=NO \
             > ipad.log 2>&1 || STATUS=$?
