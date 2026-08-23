@@ -89,6 +89,14 @@ jobs:
           status=$?
           tail -80 fastlane.log
           if [ $status -ne 0 ]; then
+            # 🔴 The REAL error first, and the FIRST of them, not the last.
+            # The line below tails matching lines, which on a compile failure
+            # only ever surfaces fastlane's closing advice about codesigning —
+            # true of every failure and therefore useless. Build 25 was
+            # diagnosed blind because of it. Compiler and xcodebuild errors
+            # appear early in the log and say exactly what is wrong.
+            first=$(grep -aE 'error: ' fastlane.log | head -8 | tr '\n' ' ~ ')
+            [ -n "$first" ] && echo "::error::cause: $first"
             echo "::error::fastlane: $(grep -aE '\[!\]|rror|Could not|denied|Unable|No profile|signing|Provisioning' fastlane.log | tail -15 | tr '\n' ' ~ ')"
           fi
           exit $status
