@@ -1,14 +1,25 @@
 import SwiftUI
 
-/// The native sign-in form: two fields and a button, with no web view anywhere
-/// in the primary path. Shared by the first-run screen and Settings so the two
-/// can never drift apart — the third entry point drifting is precisely what
-/// left "התחבר מחדש" jumping to Safari after the other two were fixed.
+/// The native sign-in form: two fields and a button, and nothing else. Shared
+/// by every entry point so they cannot drift apart — one of them drifting is
+/// precisely what left "התחבר מחדש" jumping to Safari after the other two were
+/// fixed.
 ///
-/// Google stays below as a second option, and that is deliberate: Apple's
-/// objection was never Google, it was leaving the app for the default browser.
-/// With a native form as the primary path, the OAuth sheet is an alternative
-/// rather than the only way in.
+/// 🔴 There is no Google button here, and that is a decision, not an omission.
+/// Apple refused 1.0 (24) under guideline 4.8: an app offering a third-party
+/// login service must ALSO offer one that lets a user hide their email address
+/// from the developer. Email and password does not qualify, because the address
+/// reaches us.
+///
+/// The named remedy is Sign in with Apple, and it is a poor fit here: it hands
+/// back a `@privaterelay.appleid.com` address, which can never appear on the
+/// invite allowlist, so every such user would land on NotInvitedScreen. The
+/// feature would ship broken against this product's own access model.
+///
+/// Removing the Google button instead takes the guideline out of scope
+/// entirely — a rule that does not apply cannot be failed. It cost nothing:
+/// the iPhone app had not shipped, so no one depended on it. Google sign-in is
+/// untouched on the website and on Android.
 struct SignInForm: View {
     /// Called with the device token once sign-in succeeds.
     var onToken: (String) -> Void
@@ -18,7 +29,6 @@ struct SignInForm: View {
     @State private var error = ""
     @State private var notice = ""
     @State private var busy = false
-    @State private var connect = ConnectSession()
     @FocusState private var focus: Field?
 
     private enum Field { case email, password }
@@ -81,27 +91,6 @@ struct SignInForm: View {
                 .disabled(busy)
                 .padding(.top, 2)
 
-            HStack(spacing: 10) {
-                Rectangle().fill(Brand.mutedText.opacity(0.25)).frame(height: 1)
-                Text("או").font(.footnote).foregroundStyle(Brand.mutedText)
-                Rectangle().fill(Brand.mutedText.opacity(0.25)).frame(height: 1)
-            }
-            .padding(.vertical, 6)
-
-            Button {
-                connect.start { token in onToken(token) }
-            } label: {
-                Text("התחבר עם חשבון Google")
-                    .font(.subheadline.weight(.semibold))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
-                    .foregroundStyle(Brand.text)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16)
-                            .stroke(Brand.mutedText.opacity(0.4))
-                    )
-            }
-            .disabled(busy)
         }
         // 🔴 The keyboard comes up on its own, and that is not a convenience.
         // Apple refused 1.0 (22) on an iPad Air with "the keyboard was not

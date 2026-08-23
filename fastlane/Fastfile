@@ -30,13 +30,18 @@ platform :ios do
 
     build_number = ENV.fetch("GITHUB_RUN_NUMBER", "1")
 
-    # Injected here rather than committed: the repo holds no API keys. Missing
-    # is survivable — the app then falls back to the in-app sign-in sheet — but
-    # it silently drops the native login form, so say so loudly instead of
-    # shipping a quietly downgraded build.
+    # Injected here rather than committed: the repo holds no API keys.
+    #
+    # 🔴 A missing key used to be a warning. It is now fatal, because the
+    # fallback it triggers is no longer merely a downgrade: without the key the
+    # app signs in through /connect in a sheet, and that page carries a Google
+    # button. Guideline 4.8 is only out of scope while the app offers no
+    # third-party login service at all, and guideline 4 already refused the
+    # sheet once. A build like that must never reach TestFlight.
     firebase_api_key = ENV.fetch("FIREBASE_API_KEY", "")
     if firebase_api_key.empty?
-      UI.important("FIREBASE_API_KEY is not set — building WITHOUT the native sign-in form")
+      UI.user_error!("FIREBASE_API_KEY is not set. Refusing to build: the app would " \
+                     "fall back to browser sign-in, which App Review has rejected.")
     end
 
     gym(

@@ -10,8 +10,12 @@ import SwiftUI
 //   • Build 22 moved sign-in into an in-app sheet (see ConnectSession), which
 //     satisfies the letter of the guideline.
 //   • This version stops arguing: the primary path is a native form that talks
-//     straight to Google and to our own /api/device-token, and no browser is
-//     involved at all. Google remains as a second option.
+//     straight to Firebase and to our own /api/device-token, and no browser is
+//     involved at all.
+//   • 1.0 (25) then dropped the Google button entirely. Apple refused 24 under
+//     guideline 4.8, and removing the third-party login service puts the whole
+//     guideline out of scope; see the note at the top of SignInForm for why
+//     Sign in with Apple was the worse answer here.
 //
 // The sheet is still the fallback for a build whose FIREBASE_API_KEY was not
 // injected. A build that cannot sign in at all is far worse than one that signs

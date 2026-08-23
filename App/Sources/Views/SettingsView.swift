@@ -70,34 +70,7 @@ struct SettingsView: View {
                 }
             }
             .sheet(isPresented: $showSignIn) {
-                NavigationStack {
-                    ZStack {
-                        // Painted behind the scroll view, not on it: a sheet's
-                        // own backdrop shows through around the safe areas
-                        // otherwise, and a pale strip under a dark form is the
-                        // kind of seam that reads as a half-loaded screen.
-                        Brand.surface.ignoresSafeArea()
-                        ScrollView {
-                            SignInForm { token in
-                                appState.setToken(token)
-                                showSignIn = false
-                            }
-                            .padding(24)
-                        }
-                        .scrollDismissesKeyboard(.interactively)
-                    }
-                    .navigationTitle("התחברות")
-                    .navigationBarTitleDisplayMode(.inline)
-                    .toolbar {
-                        ToolbarItem(placement: .cancellationAction) {
-                            Button("ביטול") { showSignIn = false }
-                        }
-                    }
-                }
-                // A sheet is its own presentation context: without these two it
-                // renders left-to-right and light, unlike every other screen.
-                .environment(\.layoutDirection, .rightToLeft)
-                .preferredColorScheme(.dark)
+                SignInSheet(isPresented: $showSignIn)
             }
             .confirmationDialog("לנתק את החשבון מהמכשיר?", isPresented: $confirmDisconnect, titleVisibility: .visible) {
                 Button("נתק", role: .destructive) {
