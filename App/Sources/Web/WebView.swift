@@ -74,6 +74,21 @@ struct WebView: UIViewRepresentable {
                 decisionHandler(.cancel)
                 return
             }
+            // Sub-frames stay inside, whatever their host. This handler fires for
+            // every frame, and until 2026-09-02 the external-link rule below never
+            // asked which one: the day the web app started loading reCAPTCHA
+            // Enterprise (Firebase App Check), its www.google.com iframe was
+            // thrown at Safari as if the client had tapped a link — a blank
+            // google.com page — and cancelled here, so the page behind it hung on
+            // a spinner waiting for a token that could never arrive. Every iPhone
+            // client was locked out of the app on the first open after that deploy.
+            // A frame the page embeds is the page's own business; only a
+            // top-level navigation (or a target=_blank, whose targetFrame is nil)
+            // is the client leaving the app.
+            if let target = navigationAction.targetFrame, !target.isMainFrame {
+                decisionHandler(.allow)
+                return
+            }
             // External links (and target=_blank) open in Safari.
             if let host = url.host,
                ["http", "https"].contains(url.scheme ?? ""),
