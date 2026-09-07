@@ -15,13 +15,30 @@ struct WebView: UIViewRepresentable {
         let webView = WKWebView(frame: .zero, configuration: configuration)
         webView.navigationDelegate = context.coordinator
         webView.uiDelegate = context.coordinator
-        // ExtSchemes/1 is a promise to the web app, not decoration: canOpenExternalSchemes()
-        // in src/lib/isEmbedded.ts hides every whatsapp:/tel:/mailto: link from a shell
-        // that does not claim it, because a raw WebView dies on those with
-        // ERR_UNKNOWN_URL_SCHEME. Without it the WhatsApp connect button is simply not
-        // offered on iPhone. Only add the flag while decidePolicyFor below still honours it.
+        // Both flags are PROMISES to the web app, not decoration. Each one is read
+        // by src/lib/isEmbedded.ts, and each is only true while the code below
+        // still honours it — never add one ahead of the behaviour it claims.
+        //
+        // ExtSchemes/1: canOpenExternalSchemes() hides every whatsapp:/tel:/mailto:
+        //   link from a shell that does not claim it, because a raw WebView dies on
+        //   those with ERR_UNKNOWN_URL_SCHEME. Without it the WhatsApp connect
+        //   button is simply not offered on iPhone.
+        //
+        // SubframeSafe/1: decidePolicyFor lets a NON-main-frame navigation through
+        //   regardless of host (see below). Until 645cb30 it did not, and the first
+        //   third-party iframe the web app ever loaded — reCAPTCHA Enterprise, for
+        //   Firebase App Check — was handed to Safari as though the client had
+        //   tapped a link. Blank google.com page, endless spinner behind it, every
+        //   iPhone client locked out for ~21 hours on 2026-09-01.
+        //
+        //   The web app answered by refusing to start App Check inside ANY build
+        //   whose UA says MipuyiOS, which is correct but permanent: the fixed shell
+        //   and the broken one are indistinguishable, so iPhone would sit outside
+        //   App Check forever. This flag is how a fixed build says so. Ask the
+        //   CAPABILITY, never the app version — both builds are always in the wild
+        //   at once, because the web ships continuously and this does not.
         webView.customUserAgent = (WKWebView().value(forKey: "userAgent") as? String ?? "Mozilla/5.0")
-            + " MipuyiOS/1.0 ExtSchemes/1"
+            + " MipuyiOS/1.0 ExtSchemes/1 SubframeSafe/1"
         webView.isOpaque = false
         webView.backgroundColor = UIColor(Brand.surface)
         webView.scrollView.backgroundColor = UIColor(Brand.surface)
