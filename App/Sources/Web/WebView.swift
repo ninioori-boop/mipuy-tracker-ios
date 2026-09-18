@@ -15,7 +15,7 @@ struct WebView: UIViewRepresentable {
         let webView = WKWebView(frame: .zero, configuration: configuration)
         webView.navigationDelegate = context.coordinator
         webView.uiDelegate = context.coordinator
-        // Both flags are PROMISES to the web app, not decoration. Each one is read
+        // These flags are PROMISES to the web app, not decoration. Each one is read
         // by src/lib/isEmbedded.ts, and each is only true while the code below
         // still honours it — never add one ahead of the behaviour it claims.
         //
@@ -37,8 +37,19 @@ struct WebView: UIViewRepresentable {
         //   App Check forever. This flag is how a fixed build says so. Ask the
         //   CAPABILITY, never the app version — both builds are always in the wild
         //   at once, because the web ships continuously and this does not.
+        //
+        // SessionReload/1: a successful native sign-in now REBUILDS this web view,
+        //   because WebShellView keys it on AppState.sessionEpoch instead of on the
+        //   device token. The token is a deterministic HMAC and comes back identical
+        //   every time, so the old key never changed and the page never reloaded —
+        //   which meant a sign-in through the re-auth sheet left the web session
+        //   exactly as old as it was, and deleting an account (the web wants a
+        //   sign-in from the last few minutes) was impossible from this app. The web
+        //   shows "close the app and reopen" to any build that does not claim this,
+        //   which is what actually worked there; claiming it without the key change
+        //   above would put a dead button straight back on that screen.
         webView.customUserAgent = (WKWebView().value(forKey: "userAgent") as? String ?? "Mozilla/5.0")
-            + " MipuyiOS/1.0 ExtSchemes/1 SubframeSafe/1"
+            + " MipuyiOS/1.0 ExtSchemes/1 SubframeSafe/1 SessionReload/1"
         webView.isOpaque = false
         webView.backgroundColor = UIColor(Brand.surface)
         webView.scrollView.backgroundColor = UIColor(Brand.surface)

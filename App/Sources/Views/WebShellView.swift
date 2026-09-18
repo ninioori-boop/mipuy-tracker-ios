@@ -18,7 +18,12 @@ struct WebShellView: View {
                 WebView(url: Config.expensesURL(token: token)) { deepLink in
                     handle(deepLink)
                 }
-                .id(token)
+                // Keyed on the SESSION, not the token. The device token is a
+                // deterministic HMAC and comes back identical from every
+                // sign-in, so `.id(token)` never changed, the web view was
+                // never rebuilt, and a native sign-in reached the page not at
+                // all. See AppState.sessionEpoch for what that cost.
+                .id("\(token)#\(appState.sessionEpoch)")
                 .ignoresSafeArea(edges: .bottom)
             }
         }
