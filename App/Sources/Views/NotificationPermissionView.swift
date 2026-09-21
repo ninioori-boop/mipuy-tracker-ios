@@ -27,6 +27,11 @@ struct NotificationPermissionView: View {
             Button {
                 Task {
                     await Notifier.requestPermission()
+                    // The same permission covers the local confirmations this
+                    // screen describes and the remote budget alerts from the
+                    // advisor, so the moment it is granted we ask iOS for a
+                    // token. Silently does nothing if the person refused.
+                    PushRegistration.registerIfPermitted()
                     appState.markAskedNotifications()
                 }
             } label: {

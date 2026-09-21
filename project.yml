@@ -59,6 +59,15 @@ targets:
       path: App/Hakalkalan.entitlements
       properties:
         com.apple.developer.usernotifications.time-sensitive: true
+        # Remote push. Without this key the app compiles, installs and runs, and
+        # registerForRemoteNotifications() simply never calls back — no error,
+        # no log, a device that looks registered and is unreachable forever.
+        #
+        # "production" and not "development" on purpose: this pipeline only ever
+        # produces App Store signed builds (TestFlight included), and those talk
+        # to api.push.apple.com, which is what functions/nativePush.js targets.
+        # A "development" value here would make every send answer BadDeviceToken.
+        aps-environment: production
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.orimipuy.hakalkalan

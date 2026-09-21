@@ -1,0 +1,73 @@
+# A compiler, and nothing else.
+#
+# Why this exists: nobody on this team has a Mac, so `release.yml` was the only
+# thing in the world that could tell us whether the Swift even builds — and it
+# runs ONLY on main, where it signs and ships straight to TestFlight. That made
+# every branch a guess: the only way to find a typo was to publish a build to
+# real testers, and a compile failure burned a version number on the way.
+#
+# This job compiles the exact same generated project, unsigned, and uploads
+# nothing anywhere. It deliberately does NOT run on main: there, release.yml
+# already compiles as its first act, and a second macOS runner per push would
+# be paid for twice to learn the same fact.
+name: Compile check
+
+on:
+  push:
+    branches-ignore: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: compile-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  compile:
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      # The .xcodeproj is generated, never committed — project.yml is the source
+      # of truth. So this step is also the check that project.yml itself is
+      # valid, which a hand-edited entitlements or Info.plist block can break.
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      # No signing. project.yml pins Manual signing and a match profile name,
+      # neither of which exists on a bare runner, so all four settings are
+      # overridden here. Unsigned is enough: the compiler and the type checker
+      # are what we are buying, and they run before any signing step.
+      - name: Build
+        run: |
+          # 🔴 `set +e` is load-bearing, exactly as in release.yml: the default
+          # shell is `bash -e`, so without it a failing xcodebuild kills the
+          # script here and the error-reporting lines below never run. That is
+          # what left release runs 3-7 with no annotation at all.
+          # `pipefail` is the other half — without it `$?` is tail's status,
+          # which is 0 even when the compiler failed.
+          set +e
+          set -o pipefail
+          xcodebuild build \
+            -project Hakalkalan.xcodeproj \
+            -scheme Hakalkalan \
+            -destination 'generic/platform=iOS' \
+            -configuration Debug \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            PROVISIONING_PROFILE_SPECIFIER="" \
+            2>&1 | tee build.log | tail -40
+          status=$?
+          if [ $status -ne 0 ]; then
+            # The FIRST errors, not the last. release.yml learned this the hard
+            # way: tailing the log surfaces only the closing codesign advice,
+            # which is printed on every failure and therefore says nothing.
+            echo "::error::$(grep -aE 'error: ' build.log | head -8 | tr '\n' ' ~ ')"
+          fi
+          exit $status

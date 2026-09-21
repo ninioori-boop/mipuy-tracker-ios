@@ -50,9 +50,19 @@ final class AppState {
         // token URL from scratch, and counting a launch here would rebuild a
         // web view that had only just been created.
         sessionEpoch += 1
+        // This is the one junction all three sign-in routes pass through, which
+        // is why the push registration hangs here and not in a view. The
+        // Keychain write above must come first: the registration reads it back.
+        PushRegistration.registerIfPermitted()
     }
 
     func disconnect() {
+        // 🔴 BEFORE the Keychain wipe, never after. The DELETE identifies itself
+        // with that very token, so once it is gone the server answers 401 and
+        // the registration quietly survives — meaning the next person to use
+        // this handset receives the previous owner's budget alerts. That class
+        // of leak has already happened twice in this system.
+        PushRegistration.unregister()
         KeychainStore.deleteToken()
         token = nil
     }

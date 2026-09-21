@@ -24,6 +24,14 @@ enum Config {
     /// sign-in needed no server work at all.
     static let deviceTokenEndpoint = URL(string: "https://app.orimipuy.com/api/device-token")!
 
+    /// Where the phone tells the server how to reach it with a push. POST
+    /// registers this device's APNs token, DELETE removes it on sign-out.
+    ///
+    /// The device token in the body is the only authentication, exactly as with
+    /// `transactionEndpoint` — this app sends no auth header anywhere. See
+    /// PushRegistration for why the DELETE must precede the Keychain wipe.
+    static let pushTokenEndpoint = URL(string: "https://app.orimipuy.com/api/push-token")!
+
     /// Firebase Web API key, injected at build time (GitHub secret → fastlane
     /// xcargs → Info.plist). Empty in a local or misconfigured build, which
     /// HIDES the password form rather than shipping one that always fails.
