@@ -18,7 +18,15 @@ settings:
     # signed fine and was rejected at the upload step.
     # Bump this for every release. The BUILD number needs no attention: the
     # Fastfile takes it from GITHUB_RUN_NUMBER.
-    MARKETING_VERSION: "1.0.3"
+    #
+    # 1.0.3 went on sale 2026-09-20, so that train is closed too and this had to
+    # move before the push build. Checked, not assumed — the App Store's own
+    # public lookup answers it:
+    #   curl "https://itunes.apple.com/lookup?bundleId=com.orimipuy.hakalkalan&country=il"
+    # `version` there is what is LIVE. While a build is still in review that
+    # figure is the previous one, and a new upload REPLACES the build under
+    # review rather than queueing behind it — so check before assuming either.
+    MARKETING_VERSION: "1.0.4"
     CURRENT_PROJECT_VERSION: "1"
     SWIFT_VERSION: "5.9"
     CODE_SIGN_STYLE: Manual
