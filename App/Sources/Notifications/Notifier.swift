@@ -24,6 +24,17 @@ enum Notifier {
         UNUserNotificationCenter.current().add(request)
     }
 
+    /// The server's own `notify {title, body, warn}` from a successful capture.
+    static func show(serverNotify response: [String: Any]) {
+        guard let notify = response["notify"] as? [String: Any],
+              let title = notify["title"] as? String else { return }
+        show(
+            title: title,
+            body: notify["body"] as? String ?? "",
+            warn: notify["warn"] as? Bool ?? false
+        )
+    }
+
     static func showConnectPrompt() {
         show(
             title: "האפליקציה לא מחוברת",

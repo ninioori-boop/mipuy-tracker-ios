@@ -26,7 +26,7 @@ settings:
     # `version` there is what is LIVE. While a build is still in review that
     # figure is the previous one, and a new upload REPLACES the build under
     # review rather than queueing behind it — so check before assuming either.
-    MARKETING_VERSION: "1.0.4"
+    MARKETING_VERSION: "1.0.5"
     CURRENT_PROJECT_VERSION: "1"
     SWIFT_VERSION: "5.9"
     CODE_SIGN_STYLE: Manual
