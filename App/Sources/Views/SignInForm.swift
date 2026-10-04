@@ -91,6 +91,7 @@ struct SignInForm: View {
                 .disabled(busy)
                 .padding(.top, 2)
 
+            googleUsersNote
         }
         // 🔴 The keyboard comes up on its own, and that is not a convenience.
         // Apple refused 1.0 (22) on an iPad Air with "the keyboard was not
@@ -107,6 +108,50 @@ struct SignInForm: View {
             try? await Task.sleep(for: .milliseconds(400))
             focus = .email
         }
+    }
+
+    /// For the person who has only ever signed in with Google, on the website
+    /// or on Android. There is no Google button here (see the note at the top),
+    /// and such an account has no password, so without this they type their
+    /// address, find nothing to put in the second field, and give up.
+    ///
+    /// The fix is the same Firebase reset mail as "שכחתי סיסמה": a reset on a
+    /// Google-only account ADDS a password to it, and the Google login keeps
+    /// working on the web. Two buttons, one destination, because the person who
+    /// never had a password does not think of themselves as having forgotten it.
+    ///
+    /// Naming Google in text is not offering it as a login service, so
+    /// guideline 4.8 stays out of scope.
+    private var googleUsersNote: some View {
+        VStack(spacing: 10) {
+            Text("נכנסת עד היום דרך Google?")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Brand.text)
+
+            Text("באפליקציה לאייפון נכנסים עם מייל וסיסמה. צריך לשחזר סיסמה פעם אחת: הקלד למעלה את המייל של חשבון ה-Google ולחץ «שחזור סיסמה». יגיע אליך מייל עם קישור לקביעת סיסמה, ואיתה נכנסים מכאן.")
+                .font(.footnote)
+                .foregroundStyle(Brand.mutedText)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Button(action: resetPassword) {
+                Text("שחזור סיסמה")
+                    .font(.subheadline.weight(.semibold))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .foregroundStyle(Brand.gold)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Brand.gold.opacity(0.6))
+                    )
+            }
+            .disabled(busy)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity)
+        .background(Brand.surface2)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .padding(.top, 10)
     }
 
     private func submit() {
